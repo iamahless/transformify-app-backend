@@ -46,4 +46,20 @@ class ParticipantService
             return $this->payload;
         }
     }
+
+    public function all(): \stdClass
+    {
+        try {
+            $this->payload->participants = $this->participantRepository->findAll();
+            $this->payload->message = 'Participants retrieved successfully';
+            $this->payload->status = 200;
+
+            return $this->payload;
+        } catch (\Exception $exception) {
+            $this->payload->message = $exception->getMessage();
+            $this->payload->status = 500;
+
+            return $this->payload;
+        }
+    }
 }

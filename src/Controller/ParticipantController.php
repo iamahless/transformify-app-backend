@@ -20,10 +20,17 @@ final class ParticipantController extends AbstractController
     #[Route('/participants', name: 'get_all_participants', methods: ['GET'], format: 'json')]
     public function index(): JsonResponse
     {
+        $payload = $this->participantService->all();
+
+        if (200 === $payload->status) {
+            return $this->json([
+                'participants' => $payload->participants,
+            ], $payload->status);
+        }
+
         return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/ParticipantController.php',
-        ]);
+            'message' => $payload->message,
+        ], $payload->status);
     }
 
     #[Route('/participants', name: 'create_participant', methods: ['POST'], format: 'json')]
@@ -49,7 +56,6 @@ final class ParticipantController extends AbstractController
 
         if (201 === $payload->status) {
             return $this->json([
-                'message' => $payload->message,
                 'participant' => $payload->participant,
             ], $payload->status);
         }
