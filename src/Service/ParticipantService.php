@@ -62,4 +62,27 @@ class ParticipantService
             return $this->payload;
         }
     }
+
+    public function getParticipant(string $participantId): \stdClass
+    {
+        try {
+            $participant = $this->participantRepository->find($participantId);
+            if (!$participant) {
+                $this->payload->message = 'Participant not found';
+                $this->payload->status = 404;
+
+                return $this->payload;
+            }
+
+            $this->payload->participant = $participant;
+            $this->payload->status = 200;
+
+            return $this->payload;
+        } catch (\Exception $exception) {
+            $this->payload->message = $exception->getMessage();
+            $this->payload->status = 500;
+
+            return $this->payload;
+        }
+    }
 }
