@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ParticipantRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Participant
 {
     #[ORM\Id]
@@ -36,7 +37,6 @@ class Participant
     public function __construct()
     {
         $this->appointments = new ArrayCollection();
-        $this->setCreatedAt(new \DateTimeImmutable('now'));
     }
 
     public function getId(): ?int
@@ -124,7 +124,7 @@ class Participant
     public function updatedTimestamps(): void
     {
         $this->setUpdatedAt(new \DateTimeImmutable('now'));
-        if ($this->getCreatedAt() === null) {
+        if (null === $this->getCreatedAt()) {
             $this->setCreatedAt(new \DateTimeImmutable('now'));
         }
     }
