@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\DTO\CreateParticipantRequestDto;
+use App\Resources\ParticipantResource;
 use App\Service\ParticipantService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,7 +25,7 @@ final class ParticipantController extends AbstractController
 
         if (200 === $payload->status) {
             return $this->json([
-                'participants' => $payload->participants,
+                'participants' => (new ParticipantResource($payload->participants))->toResponse(),
             ], $payload->status);
         }
 
@@ -56,7 +57,7 @@ final class ParticipantController extends AbstractController
 
         if (201 === $payload->status) {
             return $this->json([
-                'participant' => $payload->participant,
+                'participant' => (new ParticipantResource($payload->participant))->toResponse(),
             ], $payload->status);
         }
 
@@ -74,7 +75,7 @@ final class ParticipantController extends AbstractController
 
         if (200 === $payload->status) {
             return $this->json([
-                'participant' => $payload->participant,
+                'participant' => (new ParticipantResource($payload->participant))->toResponse(),
             ], $payload->status);
         }
 

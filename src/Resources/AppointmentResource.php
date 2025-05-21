@@ -20,6 +20,7 @@ class AppointmentResource extends BaseResource
                     'name' => $participant->getName(),
                 ];
             }, $item->getParticipants()->toArray()),
+            'created_at' => $item->getCreatedAt()->format('Y-m-d H:i:s'),
         ];
     }
 }
