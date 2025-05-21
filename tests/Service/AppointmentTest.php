@@ -215,7 +215,7 @@ class AppointmentTest extends TestCase
 
         $this->assertEquals(409, $result->status);
         $expectedMessage = sprintf(
-            'Cannot schedule appointment: Participant "Conflicting User" (ID: 123) has a conflict with the following appointment(s): Appointment "Existing Meeting" (ID: 456) scheduled from %s to %s. Please choose a different time slot.',
+            'Participant "Conflicting User" (ID: 123) has a conflict with: Appointment "Existing Meeting" (ID: 456) from %s to %s. Please choose a different time slot.',
             (new \DateTimeImmutable('2025-08-01 08:30:00'))->format('Y-m-d H:i'),
             (new \DateTimeImmutable('2025-08-01 09:30:00'))->format('Y-m-d H:i')
         );

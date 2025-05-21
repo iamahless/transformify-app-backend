@@ -17,6 +17,9 @@ class AppointmentRepository extends ServiceEntityRepository
         parent::__construct($registry, Appointment::class);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function findOverlappingAppointments(
         Participant $participant,
         string $startTime,

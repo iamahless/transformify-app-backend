@@ -67,10 +67,7 @@ final class ParticipantService
         try {
             $participant = $this->participantRepository->find($participantId);
             if (!$participant) {
-                $this->payload->message = 'Participant not found';
-                $this->payload->status = 404;
-
-                return $this->payload;
+                throw new \InvalidArgumentException('Participant not found', 404);
             }
 
             $this->payload->participant = $participant;
@@ -79,7 +76,7 @@ final class ParticipantService
             return $this->payload;
         } catch (\Exception $exception) {
             $this->payload->message = $exception->getMessage();
-            $this->payload->status = 500;
+            $this->payload->status = 0 !== $exception->getCode() ? $exception->getCode() : 500;
 
             return $this->payload;
         }

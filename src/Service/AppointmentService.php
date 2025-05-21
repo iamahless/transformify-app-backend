@@ -37,58 +37,43 @@ final class AppointmentService
     public function create(array $payload): \stdClass
     {
         try {
-            $participantEntities = [];
+            $participants = [];
+
+            $startAt = new \DateTimeImmutable($payload['start_at']);
+            $endAt = new \DateTimeImmutable($payload['end_at']);
+
+            if ($startAt >= $endAt) {
+                throw new \InvalidArgumentException('The appointment start time must be before the end time.', 400);
+            }
 
             foreach ($payload['participants'] as $participantId) {
                 $participant = $this->participantRepository->find($participantId);
                 if (!$participant) {
-                    $this->payload->message = "Participant with ID {$participantId} not found.";
-                    $this->payload->status = 404;
-
-                    return $this->payload;
+                    throw new \InvalidArgumentException("Participant with ID {$participantId} not found.", 404);
                 }
 
                 $overlappingAppointments = $this->appointmentRepository->findOverlappingAppointments(
                     $participant,
-                    $payload['start_at'],
-                    $payload['end_at']
+                    $startAt->format('Y-m-d H:i:s'),
+                    $endAt->format('Y-m-d H:i:s')
                 );
 
                 if (!empty($overlappingAppointments)) {
-                    $conflictDetails = [];
-                    foreach ($overlappingAppointments as $oa) {
-                        $conflictDetails[] = sprintf(
-                            'Appointment "%s" (ID: %d) scheduled from %s to %s',
-                            $oa->getTitle(),
-                            $oa->getId(),
-                            $oa->getStartAt()->format('Y-m-d H:i'),
-                            $oa->getEndAt()->format('Y-m-d H:i')
-                        );
-                    }
-                    $this->payload->message =
-                        sprintf(
-                            'Cannot schedule appointment: Participant "%s" (ID: %d) has a conflict with the following appointment(s): %s. Please choose a different time slot.',
-                            $participant->getName(),
-                            $participant->getId(),
-                            implode('; ', $conflictDetails)
-                        );
-                    $this->payload->status = 409;
-
-                    return $this->payload;
+                    $conflictDetails = $this->formatConflictDetails($overlappingAppointments);
+                    throw new \InvalidArgumentException(sprintf('Participant "%s" (ID: %s) has a conflict with: %s. Please choose a different time slot.', $participant->getName(), $participant->getId(), implode('; ', $conflictDetails)), 409);
                 }
 
-                $participantEntities[] = $participant;
+                $participants[] = $participant;
             }
 
             $appointment = new Appointment();
-
             $appointment->setTitle($payload['title'])
                 ->setDescription($payload['description'])
                 ->setSchedulerName($payload['scheduler_name'])
                 ->setSchedulerEmail($payload['scheduler_email'])
-                ->setStartAt(new \DateTimeImmutable($payload['start_at']))
-                ->setEndAt(new \DateTimeImmutable($payload['end_at']))
-                ->addParticipants($participantEntities);
+                ->setStartAt($startAt)
+                ->setEndAt($endAt)
+                ->addParticipants($participants);
 
             $this->entityManager->persist($appointment);
             $this->entityManager->flush();
@@ -99,10 +84,26 @@ final class AppointmentService
             return $this->payload;
         } catch (\Exception $exception) {
             $this->payload->message = $exception->getMessage();
-            $this->payload->status = 500;
+            $this->payload->status = 0 !== $exception->getCode() ? $exception->getCode() : 500;
 
             return $this->payload;
         }
+    }
+
+    private function formatConflictDetails(array $overlappingAppointments): array
+    {
+        $conflictDetails = [];
+        foreach ($overlappingAppointments as $appointment) {
+            $conflictDetails[] = sprintf(
+                'Appointment "%s" (ID: %s) from %s to %s',
+                $appointment->getTitle(),
+                $appointment->getId(),
+                $appointment->getStartAt()->format('Y-m-d H:i'),
+                $appointment->getEndAt()->format('Y-m-d H:i')
+            );
+        }
+
+        return $conflictDetails;
     }
 
     public function getAppointment(string $appointmentId): \stdClass
