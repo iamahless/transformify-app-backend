@@ -6,7 +6,7 @@ use App\Entity\Participant;
 use App\Repository\ParticipantRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
-class ParticipantService
+final class ParticipantService
 {
     private \stdClass $payload;
 
@@ -35,7 +35,6 @@ class ParticipantService
             $this->entityManager->flush();
 
             $this->payload->participant = $participant;
-            $this->payload->message = 'Participant created successfully';
             $this->payload->status = 201;
 
             return $this->payload;

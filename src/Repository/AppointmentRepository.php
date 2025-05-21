@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Appointment;
+use App\Entity\Participant;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -14,6 +15,26 @@ class AppointmentRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Appointment::class);
+    }
+
+    public function findOverlappingAppointments(
+        Participant $participant,
+        string $startTime,
+        string $endTime,
+    ): array {
+        $startTime = new \DateTime($startTime);
+        $endTime = new \DateTime($endTime);
+
+        $qb = $this->createQueryBuilder('a')
+            ->innerJoin('a.participants', 'p')
+            ->where('p.id = :participantId')
+            ->andWhere('a.startAt < :newEndTime')
+            ->andWhere('a.endAt > :newStartTime')
+            ->setParameter('participantId', $participant->getId())
+            ->setParameter('newStartTime', $startTime)
+            ->setParameter('newEndTime', $endTime);
+
+        return $qb->getQuery()->getResult();
     }
 
     //    /**

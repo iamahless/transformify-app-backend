@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AppointmentRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Appointment
 {
     #[ORM\Id]
@@ -167,6 +168,13 @@ class Appointment
         }
 
         return $this;
+    }
+
+    public function addParticipants(array $participants): void
+    {
+        foreach ($participants as $participant) {
+            $this->addParticipant($participant);
+        }
     }
 
     public function removeParticipant(Participant $participant): static
