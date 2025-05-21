@@ -23,11 +23,11 @@ class CreateAppointmentRequestDto
     public string $schedulerEmail;
 
     #[Assert\NotBlank]
-    #[Assert\DateTime]
+    #[Assert\DateTime('Y-m-d H:i')]
     public string $startAt;
 
     #[Assert\NotBlank]
-    #[Assert\DateTime]
+    #[Assert\DateTime('Y-m-d H:i')]
     public string $endAt;
 
     #[Assert\NotBlank]
