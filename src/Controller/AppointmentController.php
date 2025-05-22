@@ -90,6 +90,25 @@ final class AppointmentController extends AbstractController
         ], $payload->status);
     }
 
+    #[Route('/appointments/{id}', name: 'update_appointment', methods: ['PATCH', 'PUT'], format: 'json')]
+    public function update(Request $request): JsonResponse
+    {
+        $appointmentId = $request->attributes->get('id');
+        $data = json_decode($request->getContent(), true);
+
+        $payload = $this->appointmentService->update($appointmentId, $data);
+
+        if (Response::HTTP_OK === $payload->status) {
+            return $this->json([
+                'appointment' => (new AppointmentResource($payload->appointment))->toResponse(),
+            ], $payload->status);
+        }
+
+        return $this->json([
+            'message' => $payload->message,
+        ], $payload->status);
+    }
+
     #[Route('/appointments/{id}', name: 'delete_appointment', methods: ['DELETE'], format: 'json')]
     public function delete(Request $request): JsonResponse
     {

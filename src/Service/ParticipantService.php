@@ -6,13 +6,13 @@ use App\Entity\Participant;
 use App\Repository\ParticipantRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class ParticipantService
+final readonly class ParticipantService
 {
     private \stdClass $payload;
 
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly ParticipantRepository $participantRepository,
+        private EntityManagerInterface $entityManager,
+        private ParticipantRepository $participantRepository,
     ) {
         $this->payload = new \stdClass();
     }
