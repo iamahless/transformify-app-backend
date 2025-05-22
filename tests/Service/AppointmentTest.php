@@ -314,6 +314,99 @@ class AppointmentTest extends TestCase
         $this->assertObjectNotHasProperty('appointment', $result);
     }
 
+    public function testDeleteAppointmentSuccessfully(): void
+    {
+        $appointmentId = 'valid-appointment-id-123';
+        $appointmentMock = new \stdClass();
+
+        $this->appointmentRepository->expects($this->once())
+            ->method('find')
+            ->with($appointmentId)
+            ->willReturn($appointmentMock);
+
+        $this->entityManager->expects($this->once())
+            ->method('remove')
+            ->with($appointmentMock);
+
+        $this->entityManager->expects($this->once())
+            ->method('flush');
+
+        $resultPayload = $this->appointmentService->deleteAppointment($appointmentId);
+
+        $this->assertEquals('Appointment deleted successfully', $resultPayload->message);
+        $this->assertEquals(204, $resultPayload->status);
+    }
+
+    public function testDeleteAppointmentNotFound(): void
+    {
+        $appointmentId = 'non-existent-appointment-id-456';
+
+        $this->appointmentRepository->expects($this->once())
+            ->method('find')
+            ->with($appointmentId)
+            ->willReturn(null);
+
+        $this->entityManager->expects($this->never())
+            ->method('remove');
+        $this->entityManager->expects($this->never())
+            ->method('flush');
+
+        $resultPayload = $this->appointmentService->deleteAppointment($appointmentId);
+
+        $this->assertEquals('Appointment not found', $resultPayload->message);
+        $this->assertEquals(404, $resultPayload->status);
+    }
+
+    public function testDeleteAppointmentThrowsExceptionDuringFlush(): void
+    {
+        $appointmentId = 'valid-appointment-id-789';
+        $appointmentMock = new \stdClass();
+        $exceptionMessage = 'Database error during flush';
+
+        $this->appointmentRepository->expects($this->once())
+            ->method('find')
+            ->with($appointmentId)
+            ->willReturn($appointmentMock);
+
+        $this->entityManager->expects($this->once())
+            ->method('remove')
+            ->with($appointmentMock);
+
+        $this->entityManager->expects($this->once())
+            ->method('flush')
+            ->willThrowException(new \Exception($exceptionMessage));
+
+        $resultPayload = $this->appointmentService->deleteAppointment($appointmentId);
+
+        $this->assertEquals($exceptionMessage, $resultPayload->message);
+        $this->assertEquals(500, $resultPayload->status);
+    }
+
+    public function testDeleteAppointmentThrowsExceptionDuringRemove(): void
+    {
+        $appointmentId = 'valid-appointment-id-000';
+        $appointmentMock = new \stdClass();
+        $exceptionMessage = 'Error during remove operation';
+
+        $this->appointmentRepository->expects($this->once())
+            ->method('find')
+            ->with($appointmentId)
+            ->willReturn($appointmentMock);
+
+        $this->entityManager->expects($this->once())
+            ->method('remove')
+            ->with($appointmentMock)
+            ->willThrowException(new \Exception($exceptionMessage));
+
+        $this->entityManager->expects($this->never())
+            ->method('flush');
+
+        $resultPayload = $this->appointmentService->deleteAppointment($appointmentId);
+
+        $this->assertEquals($exceptionMessage, $resultPayload->message);
+        $this->assertEquals(500, $resultPayload->status);
+    }
+
     protected function tearDown(): void
     {
         parent::tearDown();
