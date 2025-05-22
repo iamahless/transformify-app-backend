@@ -8,6 +8,7 @@ use App\Service\ParticipantService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -23,7 +24,7 @@ final class ParticipantController extends AbstractController
     {
         $payload = $this->participantService->all();
 
-        if (200 === $payload->status) {
+        if (Response::HTTP_OK === $payload->status) {
             return $this->json([
                 'participants' => (new ParticipantResource($payload->participants))->toResponse(),
             ], $payload->status);
@@ -55,7 +56,7 @@ final class ParticipantController extends AbstractController
 
         $payload = $this->participantService->create($data);
 
-        if (201 === $payload->status) {
+        if (Response::HTTP_CREATED === $payload->status) {
             return $this->json([
                 'participant' => (new ParticipantResource($payload->participant))->toResponse(),
             ], $payload->status);
@@ -73,10 +74,26 @@ final class ParticipantController extends AbstractController
 
         $payload = $this->participantService->getParticipant($participantId);
 
-        if (200 === $payload->status) {
+        if (Response::HTTP_OK === $payload->status) {
             return $this->json([
                 'participant' => (new ParticipantResource($payload->participant))->toResponse(),
             ], $payload->status);
+        }
+
+        return $this->json([
+            'message' => $payload->message,
+        ], $payload->status);
+    }
+
+    #[Route('/participants/{id}', name: 'delete_participant', methods: ['DELETE'], format: 'json')]
+    public function delete(Request $request): JsonResponse
+    {
+        $participantId = $request->attributes->get('id');
+
+        $payload = $this->participantService->deleteParticipant($participantId);
+
+        if (Response::HTTP_NO_CONTENT === $payload->status) {
+            return $this->json([], $payload->status);
         }
 
         return $this->json([

@@ -2,9 +2,11 @@
 
 namespace App\Tests\Service;
 
+use App\Entity\Appointment;
 use App\Entity\Participant;
 use App\Repository\ParticipantRepository;
 use App\Service\ParticipantService;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -185,6 +187,150 @@ class ParticipantTest extends TestCase
         $this->assertEquals(500, $result->status);
         $this->assertEquals('Error finding participant', $result->message);
         $this->assertObjectNotHasProperty('participant', $result);
+    }
+
+    public function testDeleteParticipantSuccessfullyWithMultipleAppointments()
+    {
+        $participantId = 'test-participant-id';
+
+        $participant = $this->createMock(Participant::class);
+        $appointment1 = $this->createMock(Appointment::class);
+        $appointment2 = $this->createMock(Appointment::class);
+
+        $appointments = new ArrayCollection([$appointment1, $appointment2]);
+
+        $participant->method('getAppointments')->willReturn($appointments);
+        $participant->expects($this->never())
+            ->method('removeAppointment');
+
+
+        $this->participantRepository->expects($this->once())
+            ->method('find')
+            ->with($participantId)
+            ->willReturn($participant);
+
+        $this->entityManager->expects($this->once())
+            ->method('remove')
+            ->with($participant);
+
+        $this->entityManager->expects($this->once())
+            ->method('flush');
+
+        $result = $this->participantService->deleteParticipant($participantId);
+
+        $this->assertEquals('Participant deleted successfully', $result->message);
+        $this->assertEquals(204, $result->status);
+    }
+
+    public function testDeleteParticipantSuccessfullyWithOneAppointment()
+    {
+        $participantId = 'test-participant-id-single-appointment';
+
+        $participant = $this->createMock(Participant::class);
+        $appointment1 = $this->createMock(Appointment::class);
+
+        $appointments = new ArrayCollection([$appointment1]);
+
+        $participant->method('getAppointments')->willReturn($appointments);
+
+        $participant->expects($this->once())
+            ->method('removeAppointment')
+            ->with($appointment1);
+
+
+        $this->participantRepository->expects($this->once())
+            ->method('find')
+            ->with($participantId)
+            ->willReturn($participant);
+
+        $this->entityManager->expects($this->once())
+            ->method('remove')
+            ->with($participant);
+
+        $this->entityManager->expects($this->once())
+            ->method('flush');
+
+        $result = $this->participantService->deleteParticipant($participantId);
+
+        $this->assertEquals('Participant deleted successfully', $result->message);
+        $this->assertEquals(204, $result->status);
+    }
+
+    public function testDeleteParticipantSuccessfullyWithNoAppointments()
+    {
+        $participantId = 'test-participant-id-no-appointments';
+
+        $participant = $this->createMock(Participant::class);
+        $appointments = new ArrayCollection([]);
+
+        $participant->method('getAppointments')->willReturn($appointments);
+        $participant->expects($this->never())
+            ->method('removeAppointment');
+
+        $this->participantRepository->expects($this->once())
+            ->method('find')
+            ->with($participantId)
+            ->willReturn($participant);
+
+        $this->entityManager->expects($this->once())
+            ->method('remove')
+            ->with($participant);
+
+        $this->entityManager->expects($this->once())
+            ->method('flush');
+
+        $result = $this->participantService->deleteParticipant($participantId);
+
+        $this->assertEquals('Participant deleted successfully', $result->message);
+        $this->assertEquals(204, $result->status);
+    }
+
+    public function testDeleteParticipantNotFound()
+    {
+        $participantId = 'non-existent-participant-id';
+
+        $this->participantRepository->expects($this->once())
+            ->method('find')
+            ->with($participantId)
+            ->willReturn(null);
+
+        $this->entityManager->expects($this->never())
+            ->method('remove');
+
+        $this->entityManager->expects($this->never())
+            ->method('flush');
+
+        $result = $this->participantService->deleteParticipant($participantId);
+
+        $this->assertEquals('Participant not found', $result->message);
+        $this->assertEquals(404, $result->status);
+    }
+
+    public function testDeleteParticipantThrowsException()
+    {
+        $participantId = 'exception-causing-participant-id';
+        $exceptionMessage = 'Database error occurred';
+
+        $participant = $this->createMock(Participant::class);
+        $participant->method('getAppointments')->willReturn(new ArrayCollection());
+
+        $this->participantRepository->expects($this->once())
+            ->method('find')
+            ->with($participantId)
+            ->willReturn($participant);
+
+        $this->entityManager->expects($this->once())
+            ->method('remove')
+            ->with($participant)
+            ->willThrowException(new \Exception($exceptionMessage));
+
+        $this->entityManager->expects($this->never())
+            ->method('flush');
+
+        $result = $this->participantService->deleteParticipant($participantId);
+
+        $this->assertEquals($exceptionMessage, $result->message);
+        $this->assertEquals(500, $result->status);
     }
 
     protected function tearDown(): void

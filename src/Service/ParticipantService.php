@@ -81,4 +81,38 @@ final class ParticipantService
             return $this->payload;
         }
     }
+
+    public function deleteParticipant(string $participantId): \stdClass
+    {
+        try {
+            $participant = $this->participantRepository->find($participantId);
+            if (!$participant) {
+                $this->payload->message = 'Participant not found';
+                $this->payload->status = 404;
+
+                return $this->payload;
+            }
+
+            $appointments = $participant->getAppointments();
+            if ($appointments->count() <= 1) {
+                foreach ($appointments as $appointment) {
+                    $participant->removeAppointment($appointment);
+                }
+            }
+
+            $this->entityManager->remove($participant);
+            $this->entityManager->flush();
+
+            $this->payload->message = 'Participant deleted successfully';
+            $this->payload->status = 204;
+
+            return $this->payload;
+
+        } catch (\Exception $exception) {
+            $this->payload->message = $exception->getMessage();
+            $this->payload->status = 500;
+
+            return $this->payload;
+        }
+    }
 }

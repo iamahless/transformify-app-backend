@@ -91,7 +91,7 @@ final class AppointmentController extends AbstractController
     }
 
     #[Route('/appointments/{id}', name: 'delete_appointment', methods: ['DELETE'], format: 'json')]
-    public function delete(Request $request)
+    public function delete(Request $request): JsonResponse
     {
         $appointmentId = $request->attributes->get('id');
 
