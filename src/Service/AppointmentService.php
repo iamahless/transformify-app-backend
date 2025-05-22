@@ -128,4 +128,31 @@ final class AppointmentService
             return $this->payload;
         }
     }
+
+    public function deleteAppointment(string $appointmentId): \stdClass
+    {
+        try {
+            $appointment = $this->appointmentRepository->find($appointmentId);
+            if (!$appointment) {
+                $this->payload->message = 'Appointment not found';
+                $this->payload->status = 404;
+
+                return $this->payload;
+            }
+
+            $this->entityManager->remove($appointment);
+            $this->entityManager->flush();
+
+            $this->payload->message = 'Appointment deleted successfully';
+            $this->payload->status = 204;
+
+            return $this->payload;
+
+        } catch (\Exception $exception) {
+            $this->payload->message = $exception->getMessage();
+            $this->payload->status = 500;
+
+            return $this->payload;
+        }
+    }
 }

@@ -8,6 +8,7 @@ use App\Service\AppointmentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -23,10 +24,9 @@ final class AppointmentController extends AbstractController
     {
         $payload = $this->appointmentService->all();
 
-        if (200 === $payload->status) {
+        if (Response::HTTP_OK === $payload->status) {
             return $this->json([
                 'appointments' => (new AppointmentResource($payload->appointments))->toResponse(),
-                // 'appointments' => AppointmentResource::collection($payload->appointments),
             ], $payload->status);
         }
 
@@ -61,7 +61,7 @@ final class AppointmentController extends AbstractController
 
         $payload = $this->appointmentService->create($data);
 
-        if (201 === $payload->status) {
+        if (Response::HTTP_CREATED === $payload->status) {
             return $this->json([
                 'appointment' => (new AppointmentResource($payload->appointment))->toResponse(),
             ], $payload->status);
@@ -79,10 +79,26 @@ final class AppointmentController extends AbstractController
 
         $payload = $this->appointmentService->getAppointment($appointmentId);
 
-        if (200 === $payload->status) {
+        if (Response::HTTP_OK === $payload->status) {
             return $this->json([
                 'appointment' => (new AppointmentResource($payload->appointment))->toResponse(),
             ], $payload->status);
+        }
+
+        return $this->json([
+            'message' => $payload->message,
+        ], $payload->status);
+    }
+
+    #[Route('/appointments/{id}', name: 'delete_appointment', methods: ['DELETE'], format: 'json')]
+    public function delete(Request $request)
+    {
+        $appointmentId = $request->attributes->get('id');
+
+        $payload = $this->appointmentService->deleteAppointment($appointmentId);
+
+        if (Response::HTTP_NO_CONTENT === $payload->status) {
+            return $this->json([], $payload->status);
         }
 
         return $this->json([
